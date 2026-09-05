@@ -1,0 +1,10 @@
+[Unit]
+Description=Local Codex usage metrics service
+
+[Service]
+Type=dbus
+BusName=io.github.owen.CodexUsageSupervisor
+ExecStart=/usr/bin/codex-usage-supervisor-service
+Restart=on-failure
+RestartSec=2
+

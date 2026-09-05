@@ -1,0 +1,8 @@
+{
+  "uuid": "codex-usage-supervisor@owen.local",
+  "name": "Codex Usage Supervisor",
+  "description": "A local Codex allowance and activity indicator for the GNOME top panel.",
+  "version": 2,
+  "shell-version": ["42"]
+}
+

@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=Codex Usage Supervisor Preferences
+Comment=Configure the Codex top-panel usage indicator
+Exec=codex-usage-supervisor-preferences
+Icon=codex-usage-supervisor
+Terminal=false
+Categories=Development;
+Keywords=Codex;usage;tokens;focus;productivity;preferences;
+StartupNotify=true

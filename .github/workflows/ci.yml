@@ -1,0 +1,28 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install desktop dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y python3-gi gir1.2-gtk-4.0 gir1.2-adw-1 shellcheck desktop-file-utils
+      - name: Test Python
+        run: PYTHONPATH=src python3 -m unittest discover -s tests -v
+      - name: Validate extension and packaging
+        run: |
+          node --check extension/extension.js
+          python3 -m json.tool extension/metadata.json >/dev/null
+          desktop-file-validate packaging/codex-usage-supervisor.desktop
+          shellcheck packaging/build_deb.sh
+          ./packaging/build_deb.sh
+

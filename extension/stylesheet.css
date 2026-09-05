@@ -1,0 +1,148 @@
+.codex-panel-box {
+  spacing: 6px;
+}
+
+.codex-panel-icon {
+  color: #9b87f5;
+}
+
+.codex-warning {
+  color: #ffb86b;
+}
+
+.codex-critical {
+  color: #ff7188;
+}
+
+.codex-popover {
+  width: 320px;
+  padding: 8px 10px 4px;
+  spacing: 8px;
+}
+
+.codex-header {
+  padding-bottom: 8px;
+}
+
+.codex-wordmark,
+.codex-section-label {
+  font-size: 0.78em;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: #9b87f5;
+}
+
+.codex-live {
+  font-size: 0.72em;
+  font-weight: 700;
+  color: #62d9a2;
+}
+
+.codex-error {
+  color: #ff7188;
+}
+
+.codex-hero-value {
+  font-size: 2.35em;
+  font-weight: 700;
+  padding-top: 2px;
+}
+
+.codex-caption,
+.codex-reset,
+.codex-task-meta,
+.codex-task-time,
+.codex-empty {
+  color: #9ca3b5;
+}
+
+.codex-caption {
+  font-size: 0.9em;
+  padding-bottom: 5px;
+}
+
+.codex-progress-track {
+  width: 320px;
+  height: 5px;
+  background-color: rgba(156, 163, 181, 0.22);
+  border-radius: 3px;
+}
+
+.codex-progress-fill {
+  height: 5px;
+  border-radius: 3px;
+}
+
+.codex-progress-primary {
+  background-color: #9b87f5;
+}
+
+.codex-progress-secondary {
+  background-color: #52d3c4;
+}
+
+.codex-secondary-header {
+  padding-top: 12px;
+}
+
+.codex-secondary-value {
+  font-weight: 600;
+}
+
+.codex-reset {
+  font-size: 0.82em;
+}
+
+.codex-divider {
+  height: 1px;
+  margin: 10px 0 8px;
+  background-color: rgba(156, 163, 181, 0.18);
+}
+
+.codex-stats {
+  padding: 5px 0 4px;
+}
+
+.codex-stat {
+  spacing: 2px;
+}
+
+.codex-stat-value {
+  font-size: 1.1em;
+  font-weight: 650;
+}
+
+.codex-stat-label {
+  font-size: 0.69em;
+  color: #9ca3b5;
+}
+
+.codex-recent-list {
+  spacing: 1px;
+}
+
+.codex-recent-row {
+  spacing: 10px;
+  padding: 7px 0;
+}
+
+.codex-activity-dot {
+  color: #52d3c4;
+  font-size: 0.68em;
+  padding-top: 4px;
+}
+
+.codex-task-name {
+  font-weight: 550;
+  max-width: 225px;
+}
+
+.codex-task-meta,
+.codex-task-time {
+  font-size: 0.8em;
+}
+
+.codex-task-time {
+  padding-top: 2px;
+}
+

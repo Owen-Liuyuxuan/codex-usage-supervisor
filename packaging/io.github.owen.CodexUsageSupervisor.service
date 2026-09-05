@@ -1,0 +1,5 @@
+[D-BUS Service]
+Name=io.github.owen.CodexUsageSupervisor
+Exec=/usr/bin/codex-usage-supervisor-service
+SystemdService=codex-usage-supervisor.service
+

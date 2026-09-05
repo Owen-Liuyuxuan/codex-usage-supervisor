@@ -1,0 +1,24 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "codex-usage-supervisor"
+version = "0.2.0"
+description = "A private, local Ubuntu desktop dashboard for supervising Codex usage."
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "MIT"}
+authors = [{name = "Owen"}]
+dependencies = []
+
+[project.scripts]
+codex-usage-supervisor = "codex_usage_supervisor.preferences:main"
+codex-usage-supervisor-service = "codex_usage_supervisor.service:main"
+codex-usage-supervisor-preferences = "codex_usage_supervisor.preferences:main"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
