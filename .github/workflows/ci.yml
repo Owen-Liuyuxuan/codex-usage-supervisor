@@ -11,7 +11,7 @@ jobs:
   verify:
     runs-on: ubuntu-22.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Install desktop dependencies
         run: |
           sudo apt-get update
@@ -25,4 +25,3 @@ jobs:
           desktop-file-validate packaging/codex-usage-supervisor.desktop
           shellcheck packaging/build_deb.sh
           ./packaging/build_deb.sh
-
