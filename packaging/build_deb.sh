@@ -15,7 +15,7 @@ install -d "${package_root}/DEBIAN" \
   "${package_root}/usr/share/dbus-1/services" \
   "${package_root}/usr/share/gnome-shell/extensions/codex-usage-supervisor@owen.local" \
   "${package_root}/usr/share/icons/hicolor/scalable/apps" \
-  "${package_root}/usr/share/doc/codex-usage-supervisor"
+  "${package_root}/usr/share/doc/codex-usage-supervisor/docs/images"
 
 install -m 0644 "${project_dir}"/src/codex_usage_supervisor/*.py \
   "${package_root}/usr/lib/python3/dist-packages/codex_usage_supervisor/"
@@ -31,6 +31,10 @@ install -m 0644 "${project_dir}"/extension/* \
   "${package_root}/usr/share/gnome-shell/extensions/codex-usage-supervisor@owen.local/"
 install -m 0644 "${project_dir}/README.md" \
   "${package_root}/usr/share/doc/codex-usage-supervisor/"
+install -m 0644 "${project_dir}"/docs/*.md \
+  "${package_root}/usr/share/doc/codex-usage-supervisor/docs/"
+install -m 0644 "${project_dir}/docs/images/codex-panel-popover.png" \
+  "${package_root}/usr/share/doc/codex-usage-supervisor/docs/images/"
 
 cat > "${package_root}/usr/bin/codex-usage-supervisor" <<'EOF'
 #!/usr/bin/env bash

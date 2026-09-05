@@ -5,6 +5,8 @@
 The application launcher opens **preferences only**. The live visualization is
 the `Codex <percent>%` indicator in the upper-right GNOME panel.
 
+![Codex Usage Supervisor open in the GNOME panel](images/codex-panel-popover.png)
+
 After installing the package, GNOME Shell must discover the extension. On X11:
 
 1. Press `Alt+F2`.
@@ -63,4 +65,3 @@ Inspect service or extension errors:
 systemctl --user status codex-usage-supervisor.service
 journalctl --user -b | grep -i codex-usage
 ```
-

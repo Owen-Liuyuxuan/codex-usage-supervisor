@@ -7,6 +7,8 @@ allowance and activity information in the top panel. The interface uses open
 space, typography, slim progress lines, and frameless activity rows instead of
 a traditional dashboard of boxed cards.
 
+![Codex Usage Supervisor panel popover](docs/images/codex-panel-popover.png)
+
 ## Components
 
 - **GNOME Shell 42 extension:** compact `Codex 37%` panel indicator and popover;
