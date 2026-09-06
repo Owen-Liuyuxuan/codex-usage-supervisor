@@ -216,7 +216,7 @@ class CodexIndicator extends PanelMenu.Button {
         } else {
             this._panelLabel.text = 'Codex —';
             this._primaryValue.text = 'No allowance data';
-            this._primaryCaption.text = 'Start or refresh a Codex task';
+            this._primaryCaption.text = 'Check Codex sign-in or refresh';
             this._primaryBar.setFraction(0);
         }
 
@@ -236,7 +236,13 @@ class CodexIndicator extends PanelMenu.Button {
         this._focusValue.text = `${today.focus_minutes || 0} min`;
         this._tokensValue.text = compactNumber(today.tokens);
         this._renderRecent(summary.recent || []);
-        this._liveLabel.text = '● LOCAL';
+        if (summary.rate_limits_source === 'app-server') {
+            this._liveLabel.text = '● ACCOUNT';
+            this._liveLabel.remove_style_class_name('codex-stale');
+        } else {
+            this._liveLabel.text = '● LOCAL CACHE';
+            this._liveLabel.add_style_class_name('codex-stale');
+        }
         this._liveLabel.remove_style_class_name('codex-error');
     }
 

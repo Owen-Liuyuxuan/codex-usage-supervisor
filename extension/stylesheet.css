@@ -42,6 +42,10 @@
   color: #ff7188;
 }
 
+.codex-stale {
+  color: #ffb86b;
+}
+
 .codex-hero-value {
   font-size: 2.35em;
   font-weight: 700;
@@ -145,4 +149,3 @@
 .codex-task-time {
   padding-top: 2px;
 }
-

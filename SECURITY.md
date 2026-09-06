@@ -3,8 +3,10 @@
 ## Data boundaries
 
 Codex Usage Supervisor reads local session metadata and numeric counters from
-the configured Codex directory. It does not require a Codex API key and does
-not transmit Codex data over the network.
+the configured Codex directory. It does not require or store a Codex API key.
+It invokes the user's installed, authenticated Codex app-server to retrieve a
+fresh account-level allowance snapshot; Codex owns that authentication and
+network exchange.
 
 Task names and project directory names can still be sensitive. They remain on
 the local desktop and are exposed only on the user's session D-Bus.
@@ -21,4 +23,3 @@ Future remote providers, including Cursor Enterprise, must follow these rules:
 
 Please report vulnerabilities privately through GitHub's security advisory
 feature rather than opening a public issue containing sensitive details.
-

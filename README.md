@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/Owen-Liuyuxuan/codex-usage-supervisor/actions/workflows/ci.yml/badge.svg)](https://github.com/Owen-Liuyuxuan/codex-usage-supervisor/actions/workflows/ci.yml)
 
-A local-only GNOME Shell addon for Ubuntu 22.04 that places current Codex
+A privacy-focused GNOME Shell addon for Ubuntu 22.04 that places current Codex
 allowance and activity information in the top panel. The interface uses open
 space, typography, slim progress lines, and frameless activity rows instead of
 a traditional dashboard of boxed cards.
@@ -20,9 +20,12 @@ See the [usage guide](docs/USAGE.md), [architecture](docs/ARCHITECTURE.md), and
 [Cursor Enterprise monitoring design](docs/CURSOR_MONITORING.md) for details.
 
 The service reads timestamps, task metadata, and numeric counters from
-`~/.codex`. It does not use an API key, contact a server, or retain/display full
-prompt and response content. Local token totals are activity estimates rather
-than billing records.
+`~/.codex`. For allowance windows it asks the locally authenticated Codex
+app-server for a fresh account snapshot, so usage from another computer can
+appear without starting a local task. It does not manage an API key or
+retain/display full prompt and response content, and it sends nothing to a
+third-party service. Local token totals are activity estimates rather than
+billing records.
 
 ## Build and install
 
@@ -30,7 +33,9 @@ than billing records.
 git clone https://github.com/Owen-Liuyuxuan/codex-usage-supervisor.git
 cd codex-usage-supervisor
 ./packaging/build_deb.sh
-sudo apt install ./dist/codex-usage-supervisor_0.2.0_all.deb
+sudo apt install ./dist/codex-usage-supervisor_0.3.0_all.deb
+systemctl --user daemon-reload
+systemctl --user restart codex-usage-supervisor.service
 ```
 
 GNOME Shell must discover the newly installed extension. On Ubuntu Wayland,
@@ -48,6 +53,10 @@ the application launcher, or run:
 ```bash
 codex-usage-supervisor-preferences
 ```
+
+The two `systemctl --user` commands are especially important during an
+upgrade: reloading GNOME Shell does not restart an already-running D-Bus
+backend.
 
 ## Development
 

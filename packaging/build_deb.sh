@@ -63,8 +63,8 @@ Architecture: all
 Depends: python3 (>= 3.10), python3-gi, gir1.2-gtk-4.0, gir1.2-adw-1, gnome-shell (>= 42)
 Maintainer: Owen
 Description: GNOME top-panel addon for supervising Codex usage
- Shows local Codex allowance, token, task, and focus-time metrics in a modern
- GNOME Shell popover backed by an on-demand private D-Bus service.
+ Shows account allowance plus local token, task, and focus-time metrics in a
+ modern GNOME Shell popover backed by an on-demand private D-Bus service.
 EOF
 
 cat > "${package_root}/DEBIAN/postinst" <<'EOF'

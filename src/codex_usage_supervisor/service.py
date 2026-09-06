@@ -15,6 +15,7 @@ gi.require_version("Gio", "2.0")
 gi.require_version("GLib", "2.0")
 from gi.repository import Gio, GLib  # noqa: E402
 
+from .account import AccountLimitsError, fetch_account_rate_limits
 from .config import Settings
 from .metrics import DashboardMetrics, RateLimits, RateWindow, collect_metrics
 
@@ -60,7 +61,10 @@ def _limits(limits: RateLimits | None) -> dict[str, Any] | None:
     }
 
 
-def metrics_summary(metrics: DashboardMetrics) -> dict[str, Any]:
+def metrics_summary(
+    metrics: DashboardMetrics,
+    account_limits: RateLimits | None = None,
+) -> dict[str, Any]:
     """Convert internal metrics into the stable, content-free desktop contract."""
     return {
         "schema_version": 1,
@@ -71,7 +75,8 @@ def metrics_summary(metrics: DashboardMetrics) -> dict[str, Any]:
             "sessions": metrics.today_sessions,
         },
         "week": {"tokens": metrics.week_tokens},
-        "rate_limits": _limits(metrics.rate_limits),
+        "rate_limits": _limits(account_limits or metrics.rate_limits),
+        "rate_limits_source": "app-server" if account_limits else "local-session",
         "recent": [
             {
                 "name": item.name,
@@ -83,13 +88,23 @@ def metrics_summary(metrics: DashboardMetrics) -> dict[str, Any]:
             }
             for item in metrics.sessions[:5]
         ],
-        "privacy": "local-only",
+        "privacy": "local-metadata-and-codex-account",
     }
 
 
 def collect_summary(settings: Settings | None = None) -> dict[str, Any]:
     settings = settings or Settings.load()
-    return metrics_summary(collect_metrics(Path(settings.codex_home)))
+    metrics = collect_metrics(Path(settings.codex_home))
+    try:
+        account_limits = fetch_account_rate_limits()
+        refresh_error = None
+    except AccountLimitsError as error:
+        account_limits = None
+        refresh_error = str(error)
+    summary = metrics_summary(metrics, account_limits)
+    if refresh_error:
+        summary["rate_limits_refresh_error"] = refresh_error
+    return summary
 
 
 class UsageService:
