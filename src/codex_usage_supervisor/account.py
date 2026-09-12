@@ -5,7 +5,8 @@ from __future__ import annotations
 import json
 import os
 import re
-import selectors
+import queue
+import threading
 import shutil
 import subprocess
 import time
@@ -22,8 +23,23 @@ class AccountLimitsError(RuntimeError):
 
 def find_codex_executable() -> Path | None:
     """Find Codex in PATH or common per-user Node installation locations."""
+    override = os.environ.get("CODEX_EXECUTABLE")
+    if override and Path(override).is_file():
+        return Path(override)
+    if os.name == "nt":
+        root = Path(os.environ.get("LOCALAPPDATA", "")) / "OpenAI/Codex/bin"
+        native = sorted(root.glob("*/codex.exe"), key=lambda p: p.stat().st_mtime, reverse=True)
+        if native:
+            return native[0]
     discovered = shutil.which("codex")
     if discovered:
+        if os.name == "nt" and Path(discovered).suffix.lower() in {".cmd", ".bat", ".ps1"}:
+            # npm wrappers are shell scripts; launch their packaged native binary directly.
+            root = Path(discovered).parent / "node_modules/@openai"
+            native = list(root.glob("codex*/**/codex.exe"))
+            if native:
+                return native[0]
+            return None
         return Path(discovered)
 
     candidates = [
@@ -83,26 +99,35 @@ def parse_rate_limits_response(message: dict[str, Any]) -> RateLimits:
     )
 
 
-def fetch_account_rate_limits(timeout: float = 8.0) -> RateLimits:
+def fetch_account_rate_limits(timeout: float = 8.0, codex_home: str | None = None) -> RateLimits:
     """Start a short-lived app-server and request a backend account snapshot."""
     executable = find_codex_executable()
     if executable is None:
         raise AccountLimitsError("Codex executable was not found")
 
-    process = subprocess.Popen(
-        [str(executable), "app-server", "--stdio"],
-        stdin=subprocess.PIPE,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.DEVNULL,
-        text=True,
-        bufsize=1,
-    )
-    if process.stdin is None or process.stdout is None:
-        process.kill()
-        raise AccountLimitsError("could not open Codex app-server pipes")
+    environment = os.environ.copy()
+    if codex_home:
+        environment["CODEX_HOME"] = codex_home
+    try:
+        process = subprocess.Popen(
+            [str(executable), "app-server", "--stdio"],
+            stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
+            text=True, encoding="utf-8", bufsize=1, env=environment,
+            creationflags=subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0,
+        )
+    except OSError as error:
+        raise AccountLimitsError(f"Could not start Codex app-server: {error}") from error
+    lines: queue.Queue[str | None] = queue.Queue()
 
-    selector = selectors.DefaultSelector()
-    selector.register(process.stdout, selectors.EVENT_READ)
+    def read_lines() -> None:
+        try:
+            for line in process.stdout:
+                lines.put(line)
+        finally:
+            lines.put(None)
+
+    reader = threading.Thread(target=read_lines, daemon=True)
+    reader.start()
 
     def send(value: dict[str, Any]) -> None:
         process.stdin.write(json.dumps(value, separators=(",", ":")) + "\n")
@@ -110,18 +135,18 @@ def fetch_account_rate_limits(timeout: float = 8.0) -> RateLimits:
 
     def response(request_id: int, deadline: float) -> dict[str, Any]:
         while time.monotonic() < deadline:
-            for key, _event in selector.select(timeout=0.25):
-                line = key.fileobj.readline()
-                if not line:
-                    continue
-                try:
-                    message = json.loads(line)
-                except json.JSONDecodeError:
-                    continue
-                if message.get("id") == request_id:
-                    return message
-            if process.poll() is not None:
+            try:
+                line = lines.get(timeout=max(0.001, deadline - time.monotonic()))
+            except queue.Empty:
+                break
+            if line is None:
                 raise AccountLimitsError("Codex app-server exited unexpectedly")
+            try:
+                message = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            if isinstance(message, dict) and message.get("id") == request_id:
+                return message
         raise AccountLimitsError("Codex account refresh timed out")
 
     deadline = time.monotonic() + timeout
@@ -146,7 +171,6 @@ def fetch_account_rate_limits(timeout: float = 8.0) -> RateLimits:
     except (BrokenPipeError, OSError) as error:
         raise AccountLimitsError(f"Codex app-server communication failed: {error}") from error
     finally:
-        selector.close()
         if process.poll() is None:
             process.terminate()
             try:
@@ -154,3 +178,6 @@ def fetch_account_rate_limits(timeout: float = 8.0) -> RateLimits:
             except subprocess.TimeoutExpired:
                 process.kill()
                 process.wait(timeout=2)
+        reader.join(timeout=2)
+        process.stdin.close()
+        process.stdout.close()

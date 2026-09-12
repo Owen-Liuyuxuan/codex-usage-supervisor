@@ -1,0 +1,22 @@
+name: Windows
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      - name: Python tests
+        shell: pwsh
+        run: |
+          $env:PYTHONPATH = 'src'
+          python -m unittest discover -s tests -v
+      - name: Build native client
+        run: dotnet build windows/CodexUsageSupervisor -c Release

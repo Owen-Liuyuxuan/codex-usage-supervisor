@@ -1,5 +1,9 @@
 # Codex Usage Supervisor
 
+## Windows 本地改版
+
+新增原生 WPF 动态托盘图标、额度浮窗、设置和可选登录启动，共用 Python 后端。Windows 安装：`./packaging/windows/install.ps1`。详见 [Windows 使用说明](docs/WINDOWS.md)。Linux 组件保持可用。
+
 [![CI](https://github.com/Owen-Liuyuxuan/codex-usage-supervisor/actions/workflows/ci.yml/badge.svg)](https://github.com/Owen-Liuyuxuan/codex-usage-supervisor/actions/workflows/ci.yml)
 
 A privacy-focused GNOME Shell addon for Ubuntu 22.04 that places current Codex
