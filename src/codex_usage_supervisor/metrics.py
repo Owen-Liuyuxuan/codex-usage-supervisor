@@ -91,6 +91,7 @@ class SessionMetric:
     today_tokens: int = 0
     today_minutes: int = 0
     rate_limits: RateLimits | None = None
+    daily_tokens: dict[date, int] = field(default_factory=dict, repr=False)
     event_times: list[datetime] = field(default_factory=list, repr=False)
 
 
@@ -217,7 +218,28 @@ def parse_session(path: Path, names: dict[str, str], today: date) -> SessionMetr
         today_minutes=_activity_minutes(times, today),
         rate_limits=rate_limits,
         event_times=times,
+        daily_tokens=dict(usage_by_day),
     )
+
+
+_SESSION_CACHE: dict[Path, tuple[tuple, SessionMetric | None]] = {}
+
+
+def _cached_session(path: Path, names: dict[str, str], today: date) -> SessionMetric | None:
+    try:
+        stat = path.stat()
+        key = (stat.st_mtime_ns, stat.st_size, today)
+    except OSError:
+        return None
+    cached = _SESSION_CACHE.get(path)
+    if cached is None or cached[0] != key:
+        item = parse_session(path, names, today)
+        _SESSION_CACHE[path] = (key, item)
+    else:
+        item = cached[1]
+    if item is not None:
+        item.name = names.get(item.session_id, "Untitled task")
+    return item
 
 
 def collect_metrics(codex_home: Path, now: datetime | None = None) -> DashboardMetrics:
@@ -225,37 +247,19 @@ def collect_metrics(codex_home: Path, now: datetime | None = None) -> DashboardM
     today = now.date()
     week_start = today - timedelta(days=6)
     names = load_names(codex_home)
+    paths = list(session_paths(codex_home))
+    for removed in set(_SESSION_CACHE) - set(paths):
+        del _SESSION_CACHE[removed]
     sessions = [
         item
-        for path in session_paths(codex_home)
-        if (item := parse_session(path, names, today)) is not None
+        for path in paths
+        if (item := _cached_session(path, names, today)) is not None
     ]
     sessions.sort(key=lambda item: item.updated_at or datetime.min.astimezone(), reverse=True)
 
     week_tokens = 0
     for session in sessions:
-        daily_max: dict[date, int] = defaultdict(int)
-        # Re-reading only token counters keeps SessionMetric compact and makes
-        # historical week deltas correct for sessions spanning midnight.
-        try:
-            with next(p for p in session_paths(codex_home) if session.session_id in p.name).open(
-                encoding="utf-8"
-            ) as stream:
-                for line in stream:
-                    try:
-                        record = json.loads(line)
-                        stamp = _timestamp(record.get("timestamp"))
-                        payload = record.get("payload", {})
-                        info = payload.get("info", {}) if isinstance(payload, dict) else {}
-                        value = TokenUsage.from_mapping(
-                            info.get("total_token_usage") if isinstance(info, dict) else None
-                        )
-                        if stamp and value:
-                            daily_max[stamp.date()] = max(daily_max[stamp.date()], value.total_tokens)
-                    except (json.JSONDecodeError, TypeError):
-                        continue
-        except (OSError, StopIteration):
-            continue
+        daily_max = session.daily_tokens
         baseline = max((v for d, v in daily_max.items() if d < week_start), default=0)
         end = max((v for d, v in daily_max.items() if d <= today), default=baseline)
         week_tokens += max(0, end - baseline)

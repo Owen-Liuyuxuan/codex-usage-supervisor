@@ -9,12 +9,6 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-import gi
-
-gi.require_version("Gio", "2.0")
-gi.require_version("GLib", "2.0")
-from gi.repository import Gio, GLib  # noqa: E402
-
 from .account import AccountLimitsError, fetch_account_rate_limits
 from .config import Settings
 from .metrics import DashboardMetrics, RateLimits, RateWindow, collect_metrics
@@ -96,7 +90,7 @@ def collect_summary(settings: Settings | None = None) -> dict[str, Any]:
     settings = settings or Settings.load()
     metrics = collect_metrics(Path(settings.codex_home))
     try:
-        account_limits = fetch_account_rate_limits()
+        account_limits = fetch_account_rate_limits(codex_home=settings.codex_home)
         refresh_error = None
     except AccountLimitsError as error:
         account_limits = None
@@ -222,6 +216,12 @@ class UsageService:
 
 
 def run_service() -> None:
+    global Gio, GLib
+    import gi
+    gi.require_version("Gio", "2.0")
+    gi.require_version("GLib", "2.0")
+    from gi.repository import Gio, GLib
+
     service = UsageService()
     loop = GLib.MainLoop()
     owner_id = Gio.bus_own_name(

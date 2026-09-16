@@ -9,7 +9,7 @@ from pathlib import Path
 
 
 def config_path() -> Path:
-    base = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config"))
+    base = Path(os.environ.get("APPDATA", Path.home() / "AppData/Roaming")) if os.name == "nt" else Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config"))
     return base / "codex-usage-supervisor" / "settings.json"
 
 
@@ -19,7 +19,7 @@ class Settings:
     daily_focus_minutes: int = 240
     refresh_seconds: int = 30
     notify_at_percent: int = 90
-    codex_home: str = str(Path.home() / ".codex")
+    codex_home: str = os.environ.get("CODEX_HOME", str(Path.home() / ".codex"))
 
     @classmethod
     def load(cls, path: Path | None = None) -> "Settings":
@@ -27,6 +27,8 @@ class Settings:
         try:
             raw = json.loads(path.read_text(encoding="utf-8"))
         except (FileNotFoundError, json.JSONDecodeError, OSError):
+            return cls()
+        if not isinstance(raw, dict):
             return cls()
         values = {key: raw[key] for key in asdict(cls()) if key in raw}
         try:
@@ -48,4 +50,3 @@ class Settings:
         temporary = path.with_suffix(".tmp")
         temporary.write_text(json.dumps(asdict(self), indent=2) + "\n", encoding="utf-8")
         temporary.replace(path)
-
