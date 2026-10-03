@@ -8,6 +8,8 @@ flowchart LR
     A["Codex session JSONL"] --> B["Python metrics parser"]
     B --> C["Usage D-Bus service"]
     H["Codex app-server"] -->|"fresh account limits"| C
+    H -->|"successful snapshot"| I["Persistent network cache"]
+    I -->|"last account observation"| C
     C -->|"GetSummary / UsageChanged"| D["GNOME Shell extension"]
     E["Libadwaita preferences"] --> F["Local settings JSON"]
     F --> C
@@ -37,8 +39,26 @@ summaries. Full prompt and response bodies are excluded.
 
 `src/codex_usage_supervisor/account.py` starts a short-lived, locally
 authenticated Codex app-server and calls `account/rateLimits/read`. This is the
-primary allowance source. If Codex is unavailable, the service automatically
-falls back to the latest rate-limit snapshot found in local session metadata.
+live allowance source. Successful account snapshots are atomically persisted by
+`src/codex_usage_supervisor/network_cache.py`, separately from Codex's session
+metadata. The service selects the snapshot with the newest `observed_at` across
+the live account result, persistent network cache, and local session metadata.
+On equal timestamps, live account data wins, then the network cache. An older
+account response does not overwrite a newer network cache.
+
+An offline refresh or service restart preserves the last network observation;
+reading a cache never updates its observation timestamp. Newer local metadata
+can still win, and a lower percentage after an allowance reset is accepted if
+its snapshot is newer. Windows and GNOME clients share this selection policy.
+
+Cache files contain only allowance windows, plan type, and observation time.
+They live under `$XDG_CACHE_HOME/codex-usage-supervisor` (default
+`~/.cache/codex-usage-supervisor`) on Linux, or
+`%LOCALAPPDATA%/codex-usage-supervisor` on Windows. Each resolved Codex home has
+a separate hashed filename. Missing or corrupt caches are ignored; write errors
+are reported as `rate_limits_cache_error` without hiding a successful live result.
+The source is published as `app-server`, `network-cache`, or `local-session`;
+account refresh failures remain available in `rate_limits_refresh_error`.
 
 ### GNOME extension
 

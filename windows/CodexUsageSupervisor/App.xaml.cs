@@ -72,8 +72,14 @@ public partial class App : System.Windows.Application
             flyout.Update(snapshot);
             var percent = UsageFlyout.Percent(snapshot["rate_limits"]?["primary"]);
             var fresh = snapshot["rate_limits_source"]?.ToString() == "app-server";
+            var sourceLabel = snapshot["rate_limits_source"]?.ToString() switch
+            {
+                "app-server" => "账户实时",
+                "network-cache" => "账户缓存",
+                _ => "本地快照",
+            };
             DrawIcon(percent, fresh);
-            tray!.Text = percent is { } p ? $"Codex 已用 {p:0.#}% · {(fresh ? "账户实时" : "本地旧快照")}" : "Codex · 额度不可用";
+            tray!.Text = percent is { } p ? $"Codex 已用 {p:0.#}% · {sourceLabel}" : "Codex · 额度不可用";
             refreshSucceeded = true;
         }
         catch (Exception error)

@@ -38,8 +38,12 @@ Click the panel indicator to see:
 - the three most recently active tasks.
 
 The allowance values are refreshed from the signed-in Codex account through
-the local Codex app-server. The popover displays `ACCOUNT` when this succeeds
-and `LOCAL CACHE` when it has fallen back to session metadata. Token and
+the local Codex app-server. Successful account results are saved in a separate
+network cache that survives restarts. The newest observation wins across the
+live account result, the network cache, and local session metadata. A temporary
+connection failure therefore keeps the network snapshot unless local data is
+newer. The popover displays `ACCOUNT` for a live result, `NETWORK CACHE` for a
+saved account result, and `LOCAL CACHE` for local session metadata. Token and
 focus-time figures remain local estimates, not official account billing
 records.
 
