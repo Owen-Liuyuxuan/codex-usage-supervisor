@@ -40,7 +40,7 @@ billing records.
 git clone https://github.com/Owen-Liuyuxuan/codex-usage-supervisor.git
 cd codex-usage-supervisor
 ./packaging/build_deb.sh
-sudo apt install ./dist/codex-usage-supervisor_0.3.0_all.deb
+sudo apt install ./dist/codex-usage-supervisor_0.4.1_all.deb
 systemctl --user daemon-reload
 systemctl --user restart codex-usage-supervisor.service
 ```

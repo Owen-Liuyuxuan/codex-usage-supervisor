@@ -158,7 +158,7 @@ def fetch_account_rate_limits(timeout: float = 8.0, codex_home: str | None = Non
                 "clientInfo": {
                     "name": "codex-usage-supervisor",
                     "title": "Codex Usage Supervisor",
-                    "version": "0.3.0",
+                    "version": "0.4.1",
                 }
             },
         })
