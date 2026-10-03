@@ -11,7 +11,13 @@ from typing import Any
 
 from .account import AccountLimitsError, fetch_account_rate_limits
 from .config import Settings
-from .metrics import DashboardMetrics, RateLimits, RateWindow, collect_metrics
+from .metrics import DashboardMetrics, RateLimits, collect_metrics
+from .network_cache import (
+    limits_dict,
+    load_network_limits,
+    network_cache_path,
+    save_network_limits,
+)
 
 BUS_NAME = "io.github.owen.CodexUsageSupervisor"
 OBJECT_PATH = "/io/github/owen/CodexUsageSupervisor"
@@ -34,32 +40,23 @@ INTROSPECTION_XML = f"""
 """
 
 
-def _window(window: RateWindow | None) -> dict[str, Any] | None:
-    if window is None:
-        return None
-    return {
-        "used_percent": window.used_percent,
-        "window_minutes": window.window_minutes,
-        "resets_at": window.resets_at.isoformat() if window.resets_at else None,
-    }
-
-
-def _limits(limits: RateLimits | None) -> dict[str, Any] | None:
-    if limits is None:
-        return None
-    return {
-        "plan_type": limits.plan_type,
-        "primary": _window(limits.primary),
-        "secondary": _window(limits.secondary),
-        "observed_at": limits.observed_at.isoformat(),
-    }
-
-
 def metrics_summary(
     metrics: DashboardMetrics,
     account_limits: RateLimits | None = None,
+    cached_limits: RateLimits | None = None,
 ) -> dict[str, Any]:
     """Convert internal metrics into the stable, content-free desktop contract."""
+    candidates = [
+        (account_limits, "app-server"),
+        (cached_limits, "network-cache"),
+        (metrics.rate_limits, "local-session"),
+    ]
+    # Stable max gives live account data priority on equal observation times.
+    selected, source = max(
+        ((limits, source) for limits, source in candidates if limits is not None),
+        key=lambda candidate: candidate[0].observed_at,
+        default=(None, "local-session"),
+    )
     return {
         "schema_version": 1,
         "generated_at": metrics.generated_at.isoformat(),
@@ -69,8 +66,8 @@ def metrics_summary(
             "sessions": metrics.today_sessions,
         },
         "week": {"tokens": metrics.week_tokens},
-        "rate_limits": _limits(account_limits or metrics.rate_limits),
-        "rate_limits_source": "app-server" if account_limits else "local-session",
+        "rate_limits": limits_dict(selected),
+        "rate_limits_source": source,
         "recent": [
             {
                 "name": item.name,
@@ -89,13 +86,25 @@ def metrics_summary(
 def collect_summary(settings: Settings | None = None) -> dict[str, Any]:
     settings = settings or Settings.load()
     metrics = collect_metrics(Path(settings.codex_home))
+    cache_path = network_cache_path(settings.codex_home)
+    cached_limits = load_network_limits(cache_path)
     try:
         account_limits = fetch_account_rate_limits(codex_home=settings.codex_home)
         refresh_error = None
     except AccountLimitsError as error:
         account_limits = None
         refresh_error = str(error)
-    summary = metrics_summary(metrics, account_limits)
+    cache_error = None
+    if account_limits is not None and (
+        cached_limits is None or account_limits.observed_at >= cached_limits.observed_at
+    ):
+        try:
+            save_network_limits(cache_path, account_limits)
+        except (OSError, ValueError) as error:
+            cache_error = str(error)
+    summary = metrics_summary(metrics, account_limits, cached_limits)
+    if cache_error:
+        summary["rate_limits_cache_error"] = cache_error
     if refresh_error:
         summary["rate_limits_refresh_error"] = refresh_error
     return summary

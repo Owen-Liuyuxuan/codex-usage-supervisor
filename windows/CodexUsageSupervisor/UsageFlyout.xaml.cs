@@ -66,9 +66,14 @@ public partial class UsageFlyout : Window
             Recent.Children.Add(new TextBlock { Text = $"{item["project"]} · {Compact(item["tokens"]!.GetValue<double>())} tokens", Foreground = new SolidColorBrush(Color.FromRgb(139, 155, 170)), FontSize = 11 });
         }
         if (Recent.Children.Count == 0) Recent.Children.Add(new TextBlock { Text = "暂无本地任务", Margin = new Thickness(0, 10, 0, 0) });
-        var fresh = snapshot["rate_limits_source"]?.ToString() == "app-server";
+        var source = snapshot["rate_limits_source"]?.ToString();
         var observed = DateTimeOffset.TryParse(limits?["observed_at"]?.ToString(), out var stamp) ? stamp.ToLocalTime().ToString("MM/dd HH:mm") : "未知";
-        Status.Text = fresh ? $"账户实时查询 · {limits?["plan_type"]} · {DateTime.Now:HH:mm:ss} 更新" : $"本地快照（{observed}）· 实时查询失败";
+        Status.Text = source switch
+        {
+            "app-server" => $"账户实时查询 · {limits?["plan_type"]} · {observed} 更新",
+            "network-cache" => $"账户缓存（{observed}）",
+            _ => $"本地快照（{observed}）",
+        };
         Status.ToolTip = snapshot["rate_limits_refresh_error"]?.ToString();
     }
 

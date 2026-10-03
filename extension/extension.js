@@ -240,7 +240,8 @@ class CodexIndicator extends PanelMenu.Button {
             this._liveLabel.text = '● ACCOUNT';
             this._liveLabel.remove_style_class_name('codex-stale');
         } else {
-            this._liveLabel.text = '● LOCAL CACHE';
+            this._liveLabel.text = summary.rate_limits_source === 'network-cache'
+                ? '● NETWORK CACHE' : '● LOCAL CACHE';
             this._liveLabel.add_style_class_name('codex-stale');
         }
         this._liveLabel.remove_style_class_name('codex-error');

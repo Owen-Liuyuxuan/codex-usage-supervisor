@@ -26,7 +26,10 @@ See the [usage guide](docs/USAGE.md), [architecture](docs/ARCHITECTURE.md), and
 The service reads timestamps, task metadata, and numeric counters from
 `~/.codex`. For allowance windows it asks the locally authenticated Codex
 app-server for a fresh account snapshot, so usage from another computer can
-appear without starting a local task. It does not manage an API key or
+appear without starting a local task. Successful account snapshots are cached
+across restarts. Allowance display selects the newest observation across the
+live account result, saved network snapshot, and local session metadata, so a
+brief network outage does not revert to older local values. It does not manage an API key or
 retain/display full prompt and response content, and it sends nothing to a
 third-party service. Local token totals are activity estimates rather than
 billing records.
